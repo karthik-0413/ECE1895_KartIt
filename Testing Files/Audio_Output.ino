@@ -1,10 +1,10 @@
 #include <SoftwareSerial.h>
 #include <DFRobotDFPlayerMini.h>
 
-const int RX = 10;
-const int TX = 11;
+const int RXPin = 10;
+const int TXPin = 11;
 
-SoftwareSerial softwareSerial(RX, TX);
+SoftwareSerial softwareSerial(RXPin, TXPin);
 DFRobotDFPlayerMini player;
 
 
@@ -24,7 +24,7 @@ void setup() {
 
 void loop() {
     int track = random(1, 4);
-    
+
     Serial.println(track);
     
     myDFPlayer.play(track);
