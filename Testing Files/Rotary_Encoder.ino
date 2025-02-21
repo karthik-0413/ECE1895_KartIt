@@ -1,9 +1,9 @@
 // TEST THIS LOGIC OUT LOOKING AT SERIAL MONITOR AND SEEING THE DEBUGGING OUTPUTS
 
 
-const int clockPin = 5;
-const int DTPin = 6;
-const int switchPin = 7;
+const int clockPin = 11;
+const int DTPin = 12;
+const int switchPin = 13;
 
 // Other needed variables
 int counter = 0;
@@ -38,12 +38,12 @@ void loop() {
 		// If the DT state is different than the CLK state then
 		// the encoder is rotating CCW so decrement
 		if (digitalRead(DTPin) != currentStateCLK) {
-			counter --;
-			currentDir ="CCW";
-		} else {
-			// Encoder is rotating CW so increment
 			counter ++;
 			currentDir ="CW";
+		} else {
+			// Encoder is rotating CW so increment
+			counter --;
+			currentDir ="CCW";
 		}
 
 		Serial.print("Direction: ");
