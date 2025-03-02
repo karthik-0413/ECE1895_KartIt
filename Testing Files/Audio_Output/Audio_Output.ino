@@ -13,19 +13,16 @@ void setup() {
     softwareSerial.begin(9600);
 
     if (player.begin(softwareSerial)) {
-        Serial.println("OK");
+      Serial.println("OK");
     } else {
-        Serial.println("FAIL!");
+      Serial.println("FAIL!");
     }
 
-    myDFPlayer.volume(20); // Set volume to 20 (out of 30)
-    Serial.println("DFPlayer Mini Ready!");
+    player.volume(20); // Set volume to 20 (out of 30)
 }
 
 void loop() {
     int track = random(1, 4);
-
-    Serial.println(track);
     
-    myDFPlayer.play(track);
+    player.play(track);
 }

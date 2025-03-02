@@ -54,22 +54,4 @@ void loop() {
 
 	// Remember last CLK state
 	lastStateCLK = currentStateCLK;
-
-	// Read the button state
-	int btnState = digitalRead(switchPin);
-
-	//If we detect LOW signal, button is pressed
-	if (btnState == LOW) {
-	//if 50ms have passed since last LOW pulse, it means that the
-		//button has been pressed, released and pressed again
-		if (millis() - lastButtonPress > 50) {
-			Serial.println("Button pressed!");
-		}
-
-		// Remember last button press event
-		lastButtonPress = millis();
-	}
-
-	// Put in a slight delay to help debounce the reading
-	delay(1);
 }
