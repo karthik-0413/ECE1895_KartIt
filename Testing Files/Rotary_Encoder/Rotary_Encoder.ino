@@ -1,57 +1,67 @@
-// TEST THIS LOGIC OUT LOOKING AT SERIAL MONITOR AND SEEING THE DEBUGGING OUTPUTS
+#include <avr/interrupt.h>
 
+const int A_Signal = 11;
+const int B_Signal = 12;
 
-const int clockPin = 11;
-const int DTPin = 12;
-const int switchPin = 13;
-
-// Other needed variables
 int counter = 0;
-int currentStateCLK;
-int lastStateCLK;
-String currentDir ="";
-unsigned long lastButtonPress = 0;
+String currentDir = "";
+int lastA = LOW;
 
 void setup() {
-        
+
 	// Set encoder pins as inputs
-	pinMode(clockPin,INPUT);
-	pinMode(DTPin,INPUT);
-	pinMode(switchPin, INPUT_PULLUP);
+    pinMode(A_Signal, INPUT);
+    pinMode(B_Signal, INPUT);
 
 	// Setup Serial Monitor
-	Serial.begin(9600);
+    Serial.begin(9600);
 
-	// Read the initial state of CLK
-	lastStateCLK = digitalRead(clockPin);
+	// Read the initial state of A Signal
+    lastA = digitalRead(A_Signal);
+
+    // Enable Pin Change Interrupts (PCINT) for Pins 11 and 12
+    PCICR |= (1 << PCIE0);  		// Enable PCINT for PORT B (pins 8-13)
+    PCMSK0 |= (1 << PCINT5); 		// Enable interrupt for pin 11 (PB5)
+    PCMSK0 |= (1 << PCINT4); 		// Enable interrupt for pin 12 (PB4)
+}
+
+ISR(PCINT0_vect) {
+    int currentA = digitalRead(A_Signal);
+    int currentB = digitalRead(B_Signal);
+
+    if (currentA != lastA) {  // Detect change in A_Signal
+        if (currentA == HIGH) {
+            if (currentB == LOW) {
+                counter++;
+                currentDir = "Clockwise";
+            } else {
+                counter--;
+                currentDir = "Counterclockwise";
+            }
+        } else {
+            if (currentB == LOW) {
+                counter--;
+                currentDir = "Counterclockwise";
+            } else {
+                counter++;
+                currentDir = "Clockwise";
+            }
+        }
+        lastA = currentA;
+    }
 }
 
 void loop() {
-        
-	// Read the current state of CLK
-	currentStateCLK = digitalRead(clockPin);
-
-	// If last and current state of CLK are different, then pulse occurred
-	// React to only 1 state change to avoid double count
-	if (currentStateCLK != lastStateCLK  && currentStateCLK == 1){
-
-		// If the DT state is different than the CLK state then
-		// the encoder is rotating CCW so decrement
-		if (digitalRead(DTPin) != currentStateCLK) {
-			counter ++;
-			currentDir ="CW";
-		} else {
-			// Encoder is rotating CW so increment
-			counter --;
-			currentDir ="CCW";
-		}
-
-		Serial.print("Direction: ");
-		Serial.print(currentDir);
-		Serial.print(" | Counter: ");
-		Serial.println(counter);
-	}
-
-	// Remember last CLK state
-	lastStateCLK = currentStateCLK;
+    static int lastCounter = 0;
+    
+	// When steering wheel has been moved
+    if (counter != lastCounter) {
+        Serial.print("Encoder turned ");
+        Serial.print(currentDir);
+        Serial.print(" | Counter: ");
+        Serial.println(counter);
+        lastCounter = counter;
+    }
+    
+    delay(5);
 }
