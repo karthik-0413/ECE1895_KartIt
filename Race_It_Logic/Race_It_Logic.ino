@@ -120,7 +120,6 @@ void loop() {
       bool taskCompleted = false;
 
       while (millis() - startTime < timeBetweenTasks * 1000) {
-          // Check if the user correctly performed the task
           if (checkUserResponse(currentTask)) {
               taskCompleted = true;
               break;
@@ -138,7 +137,7 @@ void loop() {
         // Set correctCommand = false here
 
     if (taskCompleted) {
-          // Increase points if the user succeeded
+          // Points vary depending on powerup active
           if (pointsDoubleActive) {
             totalPoints += 2;
           } else {
@@ -155,7 +154,7 @@ void loop() {
           // Randomly generate power-ups
           applyPowerUp();
       } else {
-          // Game over if the user failed to complete the task
+          // Game ends if the user failed to complete the task on time
           Serial.println("Game Over! Final Score: " + String(totalPoints));
           correctCommand = false;
           startgame = false;
@@ -189,17 +188,17 @@ void loop() {
 bool checkUserResponse(int task) {
     switch (task) {
         case 1: 
-          return digitalRead(limitSwitchGasPin) == HIGH;
+          return digitalRead(limitSwitchGasPin) == HIGH && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
         case 2: 
-          return digitalRead(limitSwitchBrakePin) == HIGH;
+          return digitalRead(limitSwitchBrakePin) == HIGH && digitalRead(limitSwitchGasPin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
         case 3: 
-          return digitalRead(magneticSensorTopPin) == HIGH;
+          return digitalRead(magneticSensorTopPin) == HIGH && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
         case 4:
-          return digitalRead(magneticSensorBottomPin) == HIGH;
+          return digitalRead(magneticSensorBottomPin) == HIGH && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
         case 5:
-          return currentDir == 'Counterclockwise';
+          return currentDir == 'Counterclockwise' && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise';
         case 6:
-          return currentDir == 'Clockwise';
+          return currentDir == 'Clockwise' && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Counterclockwise';
         default: 
           return false;
     }
