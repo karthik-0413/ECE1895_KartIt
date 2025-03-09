@@ -136,7 +136,7 @@ void loop() {
       Serial.println(currentTask);
 
       // Start a timer for user response
-      unsigned long startTime = millis();
+      long startTime = millis();
       bool taskCompleted = false;
 
       while (millis() - startTime < timeBetweenTasks * 1000) {
