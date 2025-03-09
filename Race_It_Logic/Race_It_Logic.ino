@@ -1,4 +1,5 @@
-#include <SoftwareSerial.h>
+// <#include <SoftwareSerial.h>
+#include <AltSoftSerial.h>
 #include <DFRobotDFPlayerMini.h>
 
 // Initialize Sensor Pins Here
@@ -6,7 +7,7 @@ const int limitSwitchGasPin = 0;        // Limit Switch
 const int limitSwitchBrakePin = 1;      // Limit Switch
 const int magneticSensorTopPin = 2;     // Hall Effect Sensor
 const int magneticSensorBottomPin = 3;  // Hall Effect Sensor
-const int ASignal = 4;                 // Rotary Encoder for Steering
+const int ASignal = 4;                  // Rotary Encoder for Steering
 const int BSignal = 5;                    // Rotary Encoder for Steering
 const int systemOnButton = 6;           // System Requirements
 const int startGameButton = 7;          // System Requirements
@@ -15,7 +16,8 @@ const int TXPin = 9;                   // Audio Output Pin
 
 
 // Setting up DFPlayer Mini
-SoftwareSerial softwareSerial(RXPin, TXPin);  // Setting up DFPlayer Mini
+// SoftwareSerial softwareSerial(RXPin, TXPin);  // Setting up DFPlayer Mini
+AltSoftSerial mySerial;  // Uses fixed pins (TX=9, RX=8)
 DFRobotDFPlayerMini player;                   // Making an instance of the DFPlayer Mini
 
 
@@ -57,50 +59,27 @@ void setup() {
 
   // Debugging
   Serial.begin(9600);
-  softwareSerial.begin(9600);     // DFPlayer Mini communication via UART1 (pins 14 and 15)
+  mySerial.begin(9600);
+  // softwareSerial.begin(9600);
 
   // Setting up DFPlayer for Audio
-  if (player.begin(softwareSerial)) {
-      Serial.println("OK");
-    } else {
-      Serial.println("FAIL!");
-    }
+  if (!player.begin(mySerial)) {
+    Serial.println("DFPlayer Mini not detected!");
+    while (true);
+  }
 
 
 	// Read the initial state of A Signal (for Rotary Encoder)
   lastA = digitalRead(ASignal);
 
-  // Attach interrupts to pins 4 and 5 (which support interrupts on Arduino Nano)
-  attachInterrupt(digitalPinToInterrupt(ASignal), handleA, CHANGE);  // Trigger on change (both rising and falling edge)
-  attachInterrupt(digitalPinToInterrupt(BSignal), handleA, CHANGE);  // Trigger on change (both rising and falling edge)
+  // Enable Pin Change Interrupts for PCINT4 (Pin 4) and PCINT5 (Pin 5)
+  PCICR |= (1 << PCIE2);  // Port D Enable
+  PCMSK2 |= (1 << PCINT4) | (1 << PCINT5);  // Mask for Pins 4 and 5
     
 }
 
-// 'ISR' function for the Rotary Encoder to detect steering wheel turning and which direction
-void handleA() {
-    int currentA = digitalRead(ASignal);
-    int currentB = digitalRead(BSignal);
-
-    if (currentA != lastA) {  // Detect change in A_Signal
-        if (currentA == HIGH) {
-            if (currentB == LOW) {
-                counter++;
-                currentDir = "Clockwise";
-            } else {
-                counter--;
-                currentDir = "Counterclockwise";
-            }
-        } else {
-            if (currentB == LOW) {
-                counter--;
-                currentDir = "Counterclockwise";
-            } else {
-                counter++;
-                currentDir = "Clockwise";
-            }
-        }
-        lastA = currentA;
-    }
+ISR(PCINT2_vect) {
+    handleA();
 }
 
 
@@ -128,10 +107,11 @@ void loop() {
     // MAKE SURE TO HAVE THE SD CARD HAVE THE INSTRUCTIONS IN THIS ORDER
     // 1 = Gas It
     // 2 = Brake It
-    // 3 = Shift It
-    // 4 = Left It
-    // 5 = Right It
-      currentTask = random(1, 6);
+    // 3 = Shift It Up
+    // 4 = Shift It Down
+    // 5 = Left It
+    // 6 = Right It
+      currentTask = random(1, 7);
       Serial.print("Perform Task: ");
       Serial.println(currentTask);
 
@@ -167,12 +147,12 @@ void loop() {
           Serial.print("Points: ");
           Serial.println(totalPoints);
           
-          // Reduce the time between tasks for difficulty progression only if the time freeze power up is not active
+          // Reduce the time between tasks only if the time freeze power up is not active
           if (!timeFreezeActive) {
             timeBetweenTasks -= 0.1;
           }
 
-          // Randomly grant power-ups
+          // Randomly generate power-ups
           applyPowerUp();
       } else {
           // Game over if the user failed to complete the task
@@ -194,7 +174,6 @@ void loop() {
 
 
     // If the total points of the user is 99, then the game ends and the user is notified of their score
-    // Check for win condition (99 points)
       if (totalPoints >= 99) {
           Serial.println("Congratulations! You won the game!");
           startgame = false;
@@ -214,19 +193,21 @@ bool checkUserResponse(int task) {
         case 2: 
           return digitalRead(limitSwitchBrakePin) == HIGH;
         case 3: 
-          return digitalRead(magneticSensorTopPin) == HIGH || digitalRead(magneticSensorBottomPin) == HIGH;
+          return digitalRead(magneticSensorTopPin) == HIGH;
         case 4:
-          return currentDir == 'Counterclockwise';
+          return digitalRead(magneticSensorBottomPin) == HIGH;
         case 5:
+          return currentDir == 'Counterclockwise';
+        case 6:
           return currentDir == 'Clockwise';
         default: 
           return false;
     }
 }
 
-// Function to randomly apply power-ups
+// Function to randomly generate power-ups
 void applyPowerUp() {
-    int powerUpChance = random(1, 11);  // 1 in 3 chance of getting a power-up
+    int powerUpChance = random(1, 11);
 
     switch (powerUpChance) {
         case 1:
@@ -250,27 +231,29 @@ void applyPowerUp() {
     }
 }
 
+// 'ISR' function for the Rotary Encoder to detect steering wheel turning and which direction
+void handleA() {
+    int currentA = digitalRead(ASignal);
+    int currentB = digitalRead(BSignal);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    if (currentA != lastA) {
+        if (currentA == HIGH) {
+            if (currentB == LOW) {
+                counter++;
+                currentDir = "Clockwise";
+            } else {
+                counter--;
+                currentDir = "Counterclockwise";
+            }
+        } else {
+            if (currentB == LOW) {
+                counter--;
+                currentDir = "Counterclockwise";
+            } else {
+                counter++;
+                currentDir = "Clockwise";
+            }
+        }
+        lastA = currentA;
+    }
+}

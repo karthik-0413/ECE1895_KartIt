@@ -1,21 +1,24 @@
-#include <SoftwareSerial.h>
+// #include <SoftwareSerial.h>
+#include <AltSoftSerial.h>
 #include <DFRobotDFPlayerMini.h>
 
-const int RXPin = 10;
-const int TXPin = 11;
+const int RXPin = 8;
+const int TXPin = 9;
 
-SoftwareSerial softwareSerial(RXPin, TXPin);
-DFRobotDFPlayerMini player;
+AltSoftSerial mySerial;  // Uses fixed pins (TX=9, RX=8)
+DFRobotDFPlayerMini player;                   // Making an instance of the DFPlayer Mini
 
 
 void setup() {
     Serial.begin(9600);
-    softwareSerial.begin(9600);
+    // softwareSerial.begin(9600);
 
-    if (player.begin(softwareSerial)) {
-      Serial.println("OK");
-    } else {
-      Serial.println("FAIL!");
+    mySerial.begin(9600);
+
+    // Setting up DFPlayer for Audio
+    if (!player.begin(mySerial)) {
+      Serial.println("DFPlayer Mini not detected!");
+      while (true);
     }
 
     player.volume(20); // Set volume to 20 (out of 30)
