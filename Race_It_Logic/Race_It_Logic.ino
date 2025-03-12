@@ -196,9 +196,9 @@ bool checkUserResponse(int task) {
         case 4:
           return digitalRead(magneticSensorBottomPin) == HIGH && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
         case 5:
-          return currentDir == 'Counterclockwise' && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise';
+          return currentDir == 'Counterclockwise' && counter < 0 && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise';
         case 6:
-          return currentDir == 'Clockwise' && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Counterclockwise';
+          return currentDir == 'Clockwise' && counter > 0 && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Counterclockwise';
         default: 
           return false;
     }

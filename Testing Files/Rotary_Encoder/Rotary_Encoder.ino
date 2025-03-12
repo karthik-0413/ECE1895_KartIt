@@ -10,8 +10,8 @@ int lastA = LOW;
 void setup() {
 
 	// Set encoder pins as inputs
-    pinMode(A_Signal, INPUT);
-    pinMode(B_Signal, INPUT);
+    pinMode(A_Signal, INPUT_PULLUP);
+    pinMode(B_Signal, INPUT_PULLUP);
 
 	// Setup Serial Monitor
     Serial.begin(9600);

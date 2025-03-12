@@ -1,4 +1,3 @@
-// #include <SoftwareSerial.h>
 #include <AltSoftSerial.h>
 #include <DFRobotDFPlayerMini.h>
 
@@ -6,26 +5,37 @@ const int RXPin = 8;
 const int TXPin = 9;
 
 AltSoftSerial mySerial;  // Uses fixed pins (TX=9, RX=8)
-DFRobotDFPlayerMini player;                   // Making an instance of the DFPlayer Mini
-
+DFRobotDFPlayerMini player;
 
 void setup() {
-    Serial.begin(9600);
-    // softwareSerial.begin(9600);
+    Serial.begin(9600);         // Start Serial Monitor
+    mySerial.begin(9600);       // Start communication with DFPlayer Mini
 
-    mySerial.begin(9600);
+    Serial.println("Initializing DFPlayer Mini...");
 
-    // Setting up DFPlayer for Audio
     if (!player.begin(mySerial)) {
-      Serial.println("DFPlayer Mini not detected!");
-      while (true);
+        Serial.println("DFPlayer Mini initialization failed!");
+        while (true); // Stop execution if DFPlayer doesn't initialize
     }
 
-    player.volume(20); // Set volume to 20 (out of 30)
+    Serial.println("DFPlayer Mini initialized successfully.");
+    Serial.println("Sending play command...");
+
+    player.volume(30);  // Set volume
+    player.play(1);     // Play track 001 in folder 01
+
+    Serial.println("If the DFPlayer is working, it should now be playing track 001.");
 }
 
 void loop() {
-    int track = random(1, 4);
-    
-    player.play(track);
+    // Read the DFPlayer's status
+    if (player.available()) {
+        int status = player.readType();
+        int value = player.read();
+
+        Serial.print("DFPlayer Status: ");
+        Serial.print(status);
+        Serial.print(" | Value: ");
+        Serial.println(value);
+    }
 }
