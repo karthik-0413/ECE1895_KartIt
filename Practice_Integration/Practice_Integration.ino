@@ -17,8 +17,8 @@ const int TXPin = 9;                   // Audio Output Pin
 // const int TXPin2 = 11;                   // Audio Output Pin
 const int LeftButton = 12;              // Button for Left Arrow to Select Track
 const int RightButton = 13;             // Button for Right Arrow to Select Track
-const int ConfirmButton = 4;           // Button for Confirming User Input
-const int LEDPin = 5;                  // LED for debugging practice
+const int ConfirmButton = A0;           // Button for Confirming User Input
+const int LEDPin = A1;                  // LED for debugging practice
 
 
 
@@ -94,7 +94,8 @@ void loop() {
       startgame = true;
   }
 
-  if (startgame && correctCommand) {
+  // if (startgame && correctCommand) {
+  if (true) {
     // START LOGIC HERE
 
     // ALL LOGIC FOR INDIVIDUAL SENSORS IS ALREADY CODED AND ATTACHED IN THE SCREENSHOTS BELOW
@@ -114,7 +115,7 @@ void loop() {
       Serial.println(currentTask);
 
       // Playing the audio file for the task
-      mp3.playTrackNumber(currentTask, 20);
+      // mp3.playTrackNumber(currentTask, 20);
 
 
       // Start a timer for user response
@@ -129,7 +130,7 @@ void loop() {
       }
 
       if (taskCompleted) {
-        digitalWrite(LEDPin, HIGH);
+        analogWrite(LEDPin, HIGH);
       }
   }
 
@@ -195,16 +196,22 @@ void loop() {
 bool checkUserResponse(int task) {
     switch (task) {
         case 1: 
+          Serial.print("Working");
           return digitalRead(limitSwitchGasPin) == HIGH && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
         case 2: 
+          Serial.print("Working");
           return digitalRead(limitSwitchBrakePin) == HIGH && digitalRead(limitSwitchGasPin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
         case 3: 
+          Serial.print("Working");
           return digitalRead(magneticSensorTopPin) == HIGH && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
         case 4:
+          Serial.print("Working");
           return digitalRead(magneticSensorBottomPin) == HIGH && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
         case 5:
+          Serial.print("Working");
           return currentDir == 'Counterclockwise' && counter < 0 && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise';
         case 6:
+          Serial.print("Working");
           return currentDir == 'Clockwise' && counter > 0 && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Counterclockwise';
         default: 
           return false;
