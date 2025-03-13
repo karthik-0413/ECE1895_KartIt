@@ -72,8 +72,8 @@ void setup() {
 	// Read the initial state of A Signal (for Rotary Encoder)
   lastA = digitalRead(ASignal);
 
-  attachInterrupt(digitalPinToInterrupt(2), handle_A, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(3), handle_A, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ASignal), handle_A, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(BSignal), handle_A, CHANGE);
 
   // // Enable Pin Change Interrupts for PCINT4 (Pin 4) and PCINT5 (Pin 5)
   // PCICR |= B00000010;      // Enable PCINT for PORT D (pins 4-13)
