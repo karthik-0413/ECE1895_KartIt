@@ -1,13 +1,14 @@
 // <#include <SoftwareSerial.h>
 #include "mp3tf16p.h"
+#include <avr/interrupt.h>
 
 // Initialize Sensor Pins Here
 const int limitSwitchGasPin = 0;        // Limit Switch
 const int limitSwitchBrakePin = 1;      // Limit Switch
-const int magneticSensorTopPin = 2;     // Hall Effect Sensor
-const int magneticSensorBottomPin = 3;  // Hall Effect Sensor
-const int ASignal = 4;                  // Rotary Encoder for Steering
-const int BSignal = 5;                    // Rotary Encoder for Steering
+const int ASignal = 2;                  // Rotary Encoder for Steering
+const int BSignal = 3;                    // Rotary Encoder for Steering
+const int magneticSensorTopPin = 4;     // Hall Effect Sensor
+const int magneticSensorBottomPin = 5;  // Hall Effect Sensor
 const int systemOnButton = 6;           // System Requirements
 const int startGameButton = 7;          // System Requirements
 const int RXPin = 8;                   // Audio Output Pin
@@ -16,7 +17,8 @@ const int TXPin = 9;                   // Audio Output Pin
 // const int TXPin2 = 11;                   // Audio Output Pin
 const int LeftButton = 12;              // Button for Left Arrow to Select Track
 const int RightButton = 13;             // Button for Right Arrow to Select Track
-const int ConfirmButton = 14;           // Button for Confirming User Input
+const int ConfirmButton = 4;           // Button for Confirming User Input
+const int LEDPin = 5;                  // LED for debugging practice
 
 
 
@@ -53,8 +55,9 @@ void setup() {
   pinMode(limitSwitchBrakePin, INPUT_PULLUP);
   pinMode(magneticSensorTopPin, INPUT_PULLUP);
   pinMode(magneticSensorBottomPin, INPUT_PULLUP);
-  pinMode(ASignal,INPUT);
-	pinMode(BSignal,INPUT);
+  pinMode(ASignal,INPUT_PULLUP);
+	pinMode(BSignal,INPUT_PULLUP);
+  pinMode(LEDPin, OUTPUT);
 
   // Define Pin Modes for Other Buttons
   pinMode(systemOnButton, INPUT);
@@ -69,16 +72,14 @@ void setup() {
 	// Read the initial state of A Signal (for Rotary Encoder)
   lastA = digitalRead(ASignal);
 
-  // Enable Pin Change Interrupts for PCINT4 (Pin 4) and PCINT5 (Pin 5)
-  PCICR |= (1 << PCIE2);  // Port D Enable
-  PCMSK2 |= (1 << PCINT4) | (1 << PCINT5);  // Mask for Pins 4 and 5
+  attachInterrupt(digitalPinToInterrupt(2), handle_A, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(3), handle_A, CHANGE);
+
+  // // Enable Pin Change Interrupts for PCINT4 (Pin 4) and PCINT5 (Pin 5)
+  // PCICR |= B00000010;      // Enable PCINT for PORT D (pins 4-13)
+  // PCMSK1 |= B00000010 | B00000001; 		// Enable interrupt for pin 11 (PD4) -> PCINT20/PCINT21
     
 }
-
-ISR(PCINT2_vect) {
-    handleA();
-}
-
 
 void loop() {
 
@@ -115,6 +116,7 @@ void loop() {
       // Playing the audio file for the task
       mp3.playTrackNumber(currentTask, 20);
 
+
       // Start a timer for user response
       long startTime = millis();
       bool taskCompleted = false;
@@ -126,59 +128,64 @@ void loop() {
           }
       }
 
-    // If the user does the command properly, then one points gets added to the total points variable
-        // this is the case if the user provides a reponse ONLY to the command given and no other command and the proper command has to be done within the time limit
-        // Set correctCommand = true here
-        // totalPoints++;
-        // Add all sensor checks that is in the other separate files
-    // else if the user is unsuccessful in responding to a command either by not responding in time or by providing an incorrect response, then game will end and the user will be notified of their final score 
-        // In this case, the user would have the click the start game button in order to play again
-        // Make sure to check here that other commands are not done 
-        // Set correctCommand = false here
-
-    if (taskCompleted) {
-          // Points vary depending on powerup active
-          if (pointsDoubleActive) {
-            totalPoints += 2;
-          } else {
-            totalPoints ++;
-          }
-          Serial.print("Points: ");
-          Serial.println(totalPoints);
-          
-          // Reduce the time between tasks only if the time freeze power up is not active
-          if (!timeFreezeActive) {
-            timeBetweenTasks -= 0.1;
-          }
-
-          // Randomly generate power-ups
-          applyPowerUp();
-      } else {
-          // Game ends if the user failed to complete the task on time
-          Serial.println("Game Over! Final Score: " + String(totalPoints));
-          correctCommand = false;
-          startgame = false;
-      }
-      
-
-    // After each command, the time interval between successive commands becomes smaller with each successful attempt
-        // Make sure to lower the time interval here
-        // timeBetweenTasks -= 0.1;
-
-
-    // There will be a periodic timer implemented here as an interrupt that will provide the user with powerups
-        // One of the powerups is to get 5 extra points (totalPoint += 5)
-        // Another one of the powerups is to give the double points for 5 seconds (pointsDoubleActive = true)
-        // The final powerup is to freeze to time for 5 seconds (timeFreezeActive = true)
-
-
-    // If the total points of the user is 99, then the game ends and the user is notified of their score
-      if (totalPoints >= 99) {
-          Serial.println("Congratulations! You won the game!");
-          startgame = false;
-          totalPoints = 0;
+      if (taskCompleted) {
+        digitalWrite(LEDPin, HIGH);
       }
   }
+
+  //   // If the user does the command properly, then one points gets added to the total points variable
+  //       // this is the case if the user provides a reponse ONLY to the command given and no other command and the proper command has to be done within the time limit
+  //       // Set correctCommand = true here
+  //       // totalPoints++;
+  //       // Add all sensor checks that is in the other separate files
+  //   // else if the user is unsuccessful in responding to a command either by not responding in time or by providing an incorrect response, then game will end and the user will be notified of their final score 
+  //       // In this case, the user would have the click the start game button in order to play again
+  //       // Make sure to check here that other commands are not done 
+  //       // Set correctCommand = false here
+
+  //   if (taskCompleted) {
+  //         // Points vary depending on powerup active
+  //         if (pointsDoubleActive) {
+  //           totalPoints += 2;
+  //         } else {
+  //           totalPoints ++;
+  //         }
+  //         Serial.print("Points: ");
+  //         Serial.println(totalPoints);
+          
+  //         // Reduce the time between tasks only if the time freeze power up is not active
+  //         if (!timeFreezeActive) {
+  //           timeBetweenTasks -= 0.1;
+  //         }
+
+  //         // Randomly generate power-ups
+  //         applyPowerUp();
+  //     } else {
+  //         // Game ends if the user failed to complete the task on time
+  //         Serial.println("Game Over! Final Score: " + String(totalPoints));
+  //         correctCommand = false;
+  //         startgame = false;
+  //     }
+      
+
+  //   // After each command, the time interval between successive commands becomes smaller with each successful attempt
+  //       // Make sure to lower the time interval here
+  //       // timeBetweenTasks -= 0.1;
+
+
+  //   // There will be a periodic timer implemented here as an interrupt that will provide the user with powerups
+  //       // One of the powerups is to get 5 extra points (totalPoint += 5)
+  //       // Another one of the powerups is to give the double points for 5 seconds (pointsDoubleActive = true)
+  //       // The final powerup is to freeze to time for 5 seconds (timeFreezeActive = true)
+
+
+  //   // If the total points of the user is 99, then the game ends and the user is notified of their score
+  //     if (totalPoints >= 99) {
+  //         Serial.println("Congratulations! You won the game!");
+  //         startgame = false;
+  //         totalPoints = 0;
+  //     }
+  // }
 
   delay(100);  // Delay
 
@@ -205,54 +212,53 @@ bool checkUserResponse(int task) {
 }
 
 // Function to randomly generate power-ups
-void applyPowerUp() {
-    int powerUpChance = random(1, 11);
+// void applyPowerUp() {
+//     int powerUpChance = random(1, 11);
 
-    switch (powerUpChance) {
-        case 1:
-            Serial.println("Power-Up: 5 Bonus Points!");
-            totalPoints += 5;
-            break;
-        case 2:
-            Serial.println("Power-Up: Double Points for 5 Seconds!");
-            pointsDoubleActive = true;
-            delay(pointsDoubleDuration * 1000);
-            pointsDoubleActive = false;
-            break;
-        case 3:
-            Serial.println("Power-Up: Time Freeze for 5 Seconds!");
-            timeFreezeActive = true;
-            delay(timeFreezeDuration * 1000);
-            timeFreezeActive = false;
-            break;
-        default:
-          break;
-    }
-}
+//     switch (powerUpChance) {
+//         case 1:
+//             Serial.println("Power-Up: 5 Bonus Points!");
+//             totalPoints += 5;
+//             break;
+//         case 2:
+//             Serial.println("Power-Up: Double Points for 5 Seconds!");
+//             pointsDoubleActive = true;
+//             delay(pointsDoubleDuration * 1000);
+//             pointsDoubleActive = false;
+//             break;
+//         case 3:
+//             Serial.println("Power-Up: Time Freeze for 5 Seconds!");
+//             timeFreezeActive = true;
+//             delay(timeFreezeDuration * 1000);
+//             timeFreezeActive = false;
+//             break;
+//         default:
+//           break;
+//     }
+// }
 
-// 'ISR' function for the Rotary Encoder to detect steering wheel turning and which direction
-void handleA() {
-    int currentA = digitalRead(ASignal);
-    int currentB = digitalRead(BSignal);
+void handle_A() {
+  int currentA = digitalRead(ASignal);
+  int currentB = digitalRead(BSignal);
 
-    if (currentA != lastA) {
-        if (currentA == HIGH) {
-            if (currentB == LOW) {
-                counter++;
-                currentDir = "Clockwise";
-            } else {
-                counter--;
-                currentDir = "Counterclockwise";
-            }
-        } else {
-            if (currentB == LOW) {
-                counter--;
-                currentDir = "Counterclockwise";
-            } else {
-                counter++;
-                currentDir = "Clockwise";
-            }
-        }
-        lastA = currentA;
-    }
+  if (currentA != lastA) {
+      if (currentA == HIGH) {
+          if (currentB == LOW) {
+              counter++;
+              currentDir = "Clockwise";
+          } else {
+              counter--;
+              currentDir = "Counterclockwise";
+          }
+      } else {
+          if (currentB == LOW) {
+              counter--;
+              currentDir = "Counterclockwise";
+          } else {
+              counter++;
+              currentDir = "Clockwise";
+          }
+      }
+      lastA = currentA;
+  }
 }

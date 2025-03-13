@@ -1,7 +1,7 @@
 #include <avr/interrupt.h>
 
-const int A_Signal = 11;
-const int B_Signal = 12;
+const int A_Signal = 4;
+const int B_Signal = 5;
 
 int counter = 0;
 String currentDir = "";
@@ -20,31 +20,35 @@ void setup() {
     lastA = digitalRead(A_Signal);
 
     // Enable Pin Change Interrupts (PCINT) for Pins 11 and 12
-    PCICR |= (1 << PCIE0);  		// Enable PCINT for PORT B (pins 8-13)
-    PCMSK0 |= (1 << PCINT5); 		// Enable interrupt for pin 11 (PB5)
-    PCMSK0 |= (1 << PCINT4); 		// Enable interrupt for pin 12 (PB4)
+    // Enable Pin Change Interrupts (PCINT) for Pins 4 and 5
+    // PCICR |= (1 << PCIE0);  		// Enable PCINT for PORT B (pins 8-13)
+    PCICR |= B00000100;      // Enable PCINT for PORT D (pins 4-13)
+    // PCMSK0 |= (1 << PCINT5); 		// Enable interrupt for pin 11 (PB5)
+    PCMSK2 |= B00100000 | B00010000; 		// Enable interrupt for pin 11 (PD4) -> PCINT20/PCINT21
+    // PCMSK0 |= (1 << PCINT4); 		// Enable interrupt for pin 12 (PB4)
+    // PCMSK0 |= (1 << PCINT5); 		// Enable interrupt for pin 12 (PD5)
 }
 
-ISR(PCINT0_vect) {
+ISR(PCINT2_vect) {
     int currentA = digitalRead(A_Signal);
     int currentB = digitalRead(B_Signal);
 
     if (currentA != lastA) {  // Detect change in A_Signal
         if (currentA == HIGH) {
             if (currentB == LOW) {
-                counter++;
-                currentDir = "Clockwise";
-            } else {
                 counter--;
-                currentDir = "Counterclockwise";
+                currentDir = "CounterClockwise";
+            } else {
+                counter++;
+                currentDir = "clockwise";
             }
         } else {
             if (currentB == LOW) {
-                counter--;
-                currentDir = "Counterclockwise";
-            } else {
                 counter++;
-                currentDir = "Clockwise";
+                currentDir = "clockwise";
+            } else {
+                counter--;
+                currentDir = "Counterwise";
             }
         }
         lastA = currentA;
