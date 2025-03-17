@@ -3,22 +3,21 @@
 #include <avr/interrupt.h>
 
 // Initialize Sensor Pins Here
-const int limitSwitchGasPin = 0;        // Limit Switch
-const int limitSwitchBrakePin = 1;      // Limit Switch
+const int PotentiometerGasPin = A0;        // Limit Switch
+const int PotentiometerBrakePin = A1;      // Limit Switch
 const int ASignal = 2;                  // Rotary Encoder for Steering
 const int BSignal = 3;                    // Rotary Encoder for Steering
-const int magneticSensorTopPin = 4;     // Hall Effect Sensor
-const int magneticSensorBottomPin = 5;  // Hall Effect Sensor
-const int systemOnButton = 6;           // System Requirements
+const int limitSwitchTopPin = 8;     // Hall Effect Sensor
+const int limitSwitchBottomPin = 9;  // Hall Effect Sensor
 const int startGameButton = 7;          // System Requirements
-const int RXPin = 8;                   // Audio Output Pin
-const int TXPin = 9;                   // Audio Output Pin
+const int RXPin = 0;                   // Audio Output Pin
+const int TXPin = 1;                   // Audio Output Pin
 // const int RXPin2 = 10;                   // Audio Output Pin
 // const int TXPin2 = 11;                   // Audio Output Pin
 const int LeftButton = 12;              // Button for Left Arrow to Select Track
 const int RightButton = 13;             // Button for Right Arrow to Select Track
-const int ConfirmButton = A0;           // Button for Confirming User Input
-const int LEDPin = A1;                  // LED for debugging practice
+const int ConfirmButton = 5;           // Button for Confirming User Input
+const int LEDPin = 4;                  // LED for debugging practice
 
 
 
@@ -40,6 +39,7 @@ int currentTask = 1;                // Random Int Function picks number between 
 int timeFreezeDuration = 5;         // 5 seconds of no timer for player
 int pointsDoubleDuration = 5;       // 5 seconds of double points for player
 int counter = 0;                    // Counter variable for the rotary encoder
+int finalCounter = 0;
 int lastA = LOW;                    // Keep track of previous ASignal value for the rotary encoder
 
 float timeBetweenTasks = 12.0;       // Time interval between commands becomes smaller with each successful attempt (seconds)
@@ -51,17 +51,16 @@ String currentDir = "";             // Variable for direction of steering wheel
 void setup() {
 
   // Define Pin Modes of All Sensors
-  pinMode(limitSwitchGasPin, INPUT_PULLUP);
-  pinMode(limitSwitchBrakePin, INPUT_PULLUP);
-  pinMode(magneticSensorTopPin, INPUT_PULLUP);
-  pinMode(magneticSensorBottomPin, INPUT_PULLUP);
+  pinMode(PotentiometerGasPin, INPUT);
+  pinMode(PotentiometerBrakePin, INPUT);
+  pinMode(limitSwitchTopPin, INPUT_PULLUP);
+  pinMode(limitSwitchBottomPin, INPUT_PULLUP);
   pinMode(ASignal,INPUT_PULLUP);
 	pinMode(BSignal,INPUT_PULLUP);
   pinMode(LEDPin, OUTPUT);
 
   // Define Pin Modes for Other Buttons
-  pinMode(systemOnButton, INPUT);
-  pinMode(startGameButton, INPUT);
+  pinMode(startGameButton, INPUT_PULLUP);
 
 
   // Debugging
@@ -83,19 +82,14 @@ void setup() {
 
 void loop() {
 
-  int systemMode = digitalRead(systemOnButton); // 0 = Off ; 1 = On
   int gameStart = digitalRead(startGameButton); // 0 = Off ; 1 = On
 
-  if (systemMode == HIGH) {
-    systemOn = true;
-  }
-
-  if (systemOn && gameStart == HIGH) {
+  if (gameStart == LOW) {
       startgame = true;
   }
 
-  // if (startgame && correctCommand) {
-  if (true) {
+  if (startgame && correctCommand) {
+  //if (true) {
     // START LOGIC HERE
 
     // ALL LOGIC FOR INDIVIDUAL SENSORS IS ALREADY CODED AND ATTACHED IN THE SCREENSHOTS BELOW
@@ -123,14 +117,17 @@ void loop() {
       bool taskCompleted = false;
 
       while (millis() - startTime < timeBetweenTasks * 1000) {
-          if (checkUserResponse(currentTask)) {
+        bool goodResponse = checkUserResponse(currentTask);
+          if (goodResponse) {
               taskCompleted = true;
+              Serial.print("User Passed Current Command!");
+              delay(500);
               break;
           }
       }
 
       if (taskCompleted) {
-        analogWrite(LEDPin, HIGH);
+        digitalWrite(LEDPin, HIGH);
       }
   }
 
@@ -196,23 +193,39 @@ void loop() {
 bool checkUserResponse(int task) {
     switch (task) {
         case 1: 
-          Serial.print("Working");
-          return digitalRead(limitSwitchGasPin) == HIGH && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
+         // Serial.print("Working");
+          // return analogRead(PotentiometerGasPin) == HIGH && analogRead(PotentiometerBrakePin) < 900 && digitalRead(limitSwitchTopPin) == LOW && digitalRead(limitSwitchBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
+          
+          Serial.println(analogRead(PotentiometerGasPin));
+          return analogRead(PotentiometerGasPin) > 400 && analogRead(PotentiometerBrakePin) < 400;
+          
         case 2: 
-          Serial.print("Working");
-          return digitalRead(limitSwitchBrakePin) == HIGH && digitalRead(limitSwitchGasPin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
+         // Serial.print("Working");
+          // return digitalRead(PotentiometerBrakePin) == HIGH && analogRead(PotentiometerGasPin) < 900 && digitalRead(limitSwitchTopPin) == LOW && digitalRead(limitSwitchBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
+          Serial.println(analogRead(PotentiometerBrakePin));
+          return analogRead(PotentiometerBrakePin) > 400 && analogRead(PotentiometerGasPin) < 400;
+          
         case 3: 
-          Serial.print("Working");
-          return digitalRead(magneticSensorTopPin) == HIGH && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
+         // Serial.print("Working");
+          return digitalRead(limitSwitchTopPin) == LOW && digitalRead(limitSwitchBottomPin) == HIGH; //&& analogRead(PotentiometerGasPin) < 900 && analogRead(PotentiometerBrakePin) < 900 
+        
         case 4:
-          Serial.print("Working");
-          return digitalRead(magneticSensorBottomPin) == HIGH && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
+          //Serial.print("Working");
+          return digitalRead(limitSwitchBottomPin) == LOW && digitalRead(limitSwitchTopPin) == HIGH; //analogRead(PotentiometerGasPin) < 900 && analogRead(PotentiometerBrakePin) < 900 
         case 5:
-          Serial.print("Working");
-          return currentDir == 'Counterclockwise' && counter < 0 && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Clockwise';
+          //Serial.print("Working");
+          // digitalWrite(4, HIGH);
+          // return true;
+          //Serial.println(currentDir);
+          return currentDir == "Counterclockwise";
+          currentDir = "";
         case 6:
-          Serial.print("Working");
-          return currentDir == 'Clockwise' && counter > 0 && digitalRead(limitSwitchGasPin) == LOW && digitalRead(limitSwitchBrakePin) == LOW && digitalRead(magneticSensorTopPin) == LOW && digitalRead(magneticSensorBottomPin) == LOW && currentDir != 'Counterclockwise';
+          // Serial.print("Working");
+          // digitalWrite(4, HIGH);
+          // return true;
+          //Serial.println(currentDir);
+          return currentDir == "Clockwise";
+          currentDir = "";
         default: 
           return false;
     }
@@ -252,20 +265,31 @@ void handle_A() {
       if (currentA == HIGH) {
           if (currentB == LOW) {
               counter++;
-              currentDir = "Clockwise";
+              //currentDir = "Clockwise";
           } else {
               counter--;
-              currentDir = "Counterclockwise";
+              //currentDir = "Counterclockwise";
           }
       } else {
           if (currentB == LOW) {
               counter--;
-              currentDir = "Counterclockwise";
+              //currentDir = "Counterclockwise";
           } else {
               counter++;
-              currentDir = "Clockwise";
+              //currentDir = "Clockwise";
           }
       }
       lastA = currentA;
+
+      // Positive Counter -> Clockwise
+      if (counter > 100) {
+        currentDir = "Counterclockwise";
+      } else if (counter < -100) {
+        currentDir = "Clockwise";
+      } else {
+        currentDir = "";
+      }
+
+      
   }
 }

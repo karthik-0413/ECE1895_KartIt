@@ -12,6 +12,7 @@ void setup() {
 	// Set encoder pins as inputs
     pinMode(A_Signal, INPUT_PULLUP);
     pinMode(B_Signal, INPUT_PULLUP);
+    pinMode(8, OUTPUT);
 
 	// Setup Serial Monitor
     Serial.begin(9600);
@@ -42,17 +43,21 @@ void handle_A() {
             if (currentB == LOW) {
                 counter--;
                 currentDir = "CounterClockwise";
+                digitalWrite(4, LOW);
             } else {
                 counter++;
                 currentDir = "clockwise";
+                digitalWrite(4, HIGH);
             }
         } else {
             if (currentB == LOW) {
                 counter++;
                 currentDir = "clockwise";
+                digitalWrite(4, HIGH);
             } else {
                 counter--;
                 currentDir = "Counterwise";
+                digitalWrite(4, LOW);
             }
         }
         lastA = currentA;
