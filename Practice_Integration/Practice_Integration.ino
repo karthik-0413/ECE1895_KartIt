@@ -1,29 +1,46 @@
 // <#include <SoftwareSerial.h>
 #include "mp3tf16p.h"
 #include <avr/interrupt.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+// #include <TM1637.h>
+
+// Display:
+// Seven Segment -> Score
+// LCD -> Commands
 
 // Initialize Sensor Pins Here
-const int PotentiometerGasPin = A0;        // Limit Switch
-const int PotentiometerBrakePin = A1;      // Limit Switch
+// const int RXPin = 0;                   // Audio Output Pin
+// const int TXPin = 1;                   // Audio Output Pin
 const int ASignal = 2;                  // Rotary Encoder for Steering
 const int BSignal = 3;                    // Rotary Encoder for Steering
-const int limitSwitchTopPin = 8;     // Hall Effect Sensor
-const int limitSwitchBottomPin = 9;  // Hall Effect Sensor
-const int startGameButton = 7;          // System Requirements
-const int RXPin = 0;                   // Audio Output Pin
-const int TXPin = 1;                   // Audio Output Pin
-// const int RXPin2 = 10;                   // Audio Output Pin
-// const int TXPin2 = 11;                   // Audio Output Pin
-const int LeftButton = 12;              // Button for Left Arrow to Select Track
-const int RightButton = 13;             // Button for Right Arrow to Select Track
-const int ConfirmButton = 5;           // Button for Confirming User Input
 const int LEDPin = 4;                  // LED for debugging practice
+const int ConfirmButton = 5;           // Button for Confirming User Input
+const int startGameButton = 6;          // System Requirements
+const int limitSwitchTopPin = 7;     // Hall Effect Sensor
+const int limitSwitchBottomPin = 8;  // Hall Effect Sensor
+const int LeftButton = 9;              // Button for Left Arrow to Select Track
+const int RightButton = 10;             // Button for Right Arrow to Select Track
+const int TMLCLK = 11;                  // Seven Segment Display Clock
+const int TMDATA = 12;                  // Seven Segment Display Data
+const int PotentiometerGasPin = A0;        // Limit Switch
+const int PotentiometerBrakePin = A1;      // Limit Switch
+const int RXPin = A2;
+const int TXPin = A3;
+
+// 13, A4, A5
 
 
 
 // Setting up DFPlayer Mini
 // SoftwareSerial softwareSerial(RXPin, TXPin);  // Setting up DFPlayer Mini
 MP3Player mp3(RXPin, TXPin);
+
+// Define the LCD address (default is 0x27 or 0x3F, depending on your module)
+LiquidCrystal_I2C lcd(0x27, 16, 2); // 16x2 LCD
+
+// Seven Segment Display
+// TM1637 tm(TMLCLK, TMDATA);
 
 
 // Variables for Logic
@@ -67,12 +84,20 @@ void setup() {
   Serial.begin(9600);
   mp3.initialize();
 
+  lcd.init();       // Initialize the LCD
+  lcd.backlight();  // Turn on the backlight
+  lcd.setCursor(0, 0);  // Set cursor to first row, first column
+
+  // tm.begin();
+
 
 	// Read the initial state of A Signal (for Rotary Encoder)
   lastA = digitalRead(ASignal);
 
   attachInterrupt(digitalPinToInterrupt(ASignal), handle_A, CHANGE);
   attachInterrupt(digitalPinToInterrupt(BSignal), handle_A, CHANGE);
+
+  randomSeed(analogRead(A5));
 
   // // Enable Pin Change Interrupts for PCINT4 (Pin 4) and PCINT5 (Pin 5)
   // PCICR |= B00000010;      // Enable PCINT for PORT D (pins 4-13)
@@ -81,6 +106,8 @@ void setup() {
 }
 
 void loop() {
+
+
 
   int gameStart = digitalRead(startGameButton); // 0 = Off ; 1 = On
 
@@ -108,8 +135,23 @@ void loop() {
       Serial.print("Perform Task: ");
       Serial.println(currentTask);
 
-      // Playing the audio file for the task
-      // mp3.playTrackNumber(currentTask, 20);
+      lcd.clear();
+
+      if (currentTask == 1) {
+        lcd.print("Turn Left!");
+      } else if (currentTask == 2) {
+        lcd.print("Gas It!");
+      } else if (currentTask == 3) {
+        lcd.print("Brake It!");
+      } else if (currentTask == 4) {
+        lcd.print("Shift Up!");
+      } else if (currentTask == 5) {
+        lcd.print("Turn Right!");
+      } else if (currentTask == 6) {
+        lcd.print("Shift Down!");
+      }
+
+      mp3.playTrackNumber(currentTask, 20);  // Play the track
 
 
       // Start a timer for user response
@@ -127,7 +169,14 @@ void loop() {
       }
 
       if (taskCompleted) {
-        digitalWrite(LEDPin, HIGH);
+        if (pointsDoubleActive) {
+          totalPoints += 2;
+        } else {
+          totalPoints++;
+        }
+        // tm.display(totalPoints);
+        Serial.print("Points: ");
+        Serial.println(totalPoints);
       }
   }
 
