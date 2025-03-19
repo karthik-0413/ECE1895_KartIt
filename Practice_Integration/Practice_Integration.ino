@@ -14,21 +14,20 @@
 // const int TXPin = 1;                   // Audio Output Pin
 const int ASignal = 2;                  // Rotary Encoder for Steering
 const int BSignal = 3;                    // Rotary Encoder for Steering
-const int ConfirmButton = 4;           // Button for Confirming User Input
-const int startGameButton = 5;          // System Requirements
-const int limitSwitchTopPin = 6;     // Hall Effect Sensor
-const int limitSwitchBottomPin = 7;  // Hall Effect Sensor
-const int JoystickButtonPin = 8;      // Joystick Button
-const int TMLCLK = 9;                  // Seven Segment Display Clock
-const int TMDATA = 10;                  // Seven Segment Display Data
-const int RXPin = 11;
-const int TXPin = 12;
+const int startGameButton = 4;          // System Requirements
+const int limitSwitchTopPin = 5;     // Hall Effect Sensor
+const int limitSwitchBottomPin = 6;  // Hall Effect Sensor
+const int JoystickButtonPin = 7;      // Joystick Button
+const int TMLCLK = 8;                  // Seven Segment Display Clock
+const int TMDATA = 9;                  // Seven Segment Display Data
+const int RXPin = 10;
+const int TXPin = 11;
 const int PotentiometerGasPin = A0;        // Limit Switch
 const int PotentiometerBrakePin = A1;      // Limit Switch
 const int JoystickXPin = A2;               // Joystick X-Axis
 
 
-// 13, A3, A4, A5
+// 12, 13, A3, A4, A5
 
 
 
