@@ -10,24 +10,27 @@
 // LCD -> Commands
 
 // Initialize Sensor Pins Here
-// const int RXPin = 0;                   // Audio Output Pin
-// const int TXPin = 1;                   // Audio Output Pin
+const int PiRXPin = 0;                   // Raspberry Pi RX Pin
+const int PiTXPin = 1;                   // Audio Output Pin
 const int ASignal = 2;                  // Rotary Encoder for Steering
 const int BSignal = 3;                    // Rotary Encoder for Steering
-const int startGameButton = 4;          // System Requirements
-const int limitSwitchTopPin = 5;     // Hall Effect Sensor
-const int limitSwitchBottomPin = 6;  // Hall Effect Sensor
-const int JoystickButtonPin = 7;      // Joystick Button
+const int RightArrowSelect = 4;          // System Requirements
+const int LeftArrowSelect = 5;      // Joystick Button
+const int limitSwitchTopPin = 6;     // Hall Effect Sensor
+const int limitSwitchBottomPin = 7;  // Hall Effect Sensor
 const int TMLCLK = 8;                  // Seven Segment Display Clock
 const int TMDATA = 9;                  // Seven Segment Display Data
 const int RXPin = 10;
 const int TXPin = 11;
+const int PiPassPin = 12;
+const int PiFailPin = 13;
 const int PotentiometerGasPin = A0;        // Limit Switch
 const int PotentiometerBrakePin = A1;      // Limit Switch
-const int JoystickXPin = A2;               // Joystick X-Axis
+const int startGameButton = A2;               // Joystick X-Axis
+const int BackUpPiRXPin = A3;              // Audio Output Pin
+const int SDA = A4;                        // I2C
+const int SCL = A5;                        // I2C
 
-
-// 12, 13, A3, A4, A5
 
 
 
