@@ -53,11 +53,12 @@ bool pointsDoubleActive = false;    // Flag to keep track of powerup being activ
 
 int totalPoints = 0;                // Points Tracker
 int currentTask = 1;                // Random Int Function picks number between 1-3 for Command
-int timeFreezeDuration = 5;         // 5 seconds of no timer for player
-int pointsDoubleDuration = 5;       // 5 seconds of double points for player
+int timeFreezeCounter = 5;         // 5 seconds of no timer for player
+int pointsDoubleCounter = 5;       // 5 seconds of double points for player
 int counter = 0;                    // Counter variable for the rotary encoder
 int finalCounter = 0;
 int lastA = LOW;                    // Keep track of previous ASignal value for the rotary encoder
+int previousCommand = 0;            // Keep track of previous command to avoid back-to-back repeats
 
 float timeBetweenTasks = 12.0;       // Time interval between commands becomes smaller with each successful attempt (seconds)
 
@@ -125,15 +126,21 @@ void loop() {
 
     // Randomly generate a task for the user (1-3)
     // MAKE SURE TO HAVE THE SD CARD HAVE THE INSTRUCTIONS IN THIS ORDER
-    // 1 = Gas It
-    // 2 = Brake It
-    // 3 = Shift It Up
-    // 4 = Shift It Down
-    // 5 = Left It
-    // 6 = Right It
+    // 1 = Turn Left
+    // 2 = Gas It
+    // 3 = Brake It
+    // 4 = Shift Up
+    // 5 = Turn Right
+    // 6 = Shift Down
       currentTask = random(1, 7);
       Serial.print("Perform Task: ");
       Serial.println(currentTask);
+
+      while (currentTask == previousCommand) {
+        currentTask = random(1, 7);
+        Serial.print("Changed Repeated Task To: ");
+        Serial.println(currentTask);
+      }
 
       lcd.clear();
 
@@ -159,152 +166,276 @@ void loop() {
       bool taskCompleted = false;
 
       while (millis() - startTime < timeBetweenTasks * 1000) {
-        bool goodResponse = checkUserResponse(currentTask);
-          if (goodResponse) {
+        // 1 = Bad Response
+        // 2 = Correct Response
+        // 3 = No Response Yet
+        int goodResponse = checkUserResponse(currentTask);
+          if (goodResponse == 2) {
               taskCompleted = true;
               Serial.print("User Passed Current Command!");
               delay(500);
               break;
+          } else if (goodResponse == 1) {
+            taskCompleted = false;
+            Serial.print("Incorrect Command Done by User!");
+            delay(500);
+            break;
           }
       }
 
       if (taskCompleted) {
-        if (pointsDoubleActive) {
-          totalPoints += 2;
+        if (pointsDoubleActive and pointsDoubleCounter >= 0) {
+          if (pointsDoubleCounter == 0) {
+            pointsDoubleActive = false;
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            if (currentTask == 1) {
+              lcd.print("Turn Left!");
+            } else if (currentTask == 2) {
+              lcd.print("Gas It!");
+            } else if (currentTask == 3) {
+              lcd.print("Brake It!");
+            } else if (currentTask == 4) {
+              lcd.print("Shift Up!");
+            } else if (currentTask == 5) {
+              lcd.print("Turn Right!");
+            } else if (currentTask == 6) {
+              lcd.print("Shift Down!");
+            }
+          } else if (pointsDoubleCounter > 0) {
+            totalPoints += 2;
+            pointsDoubleCounter--;
+          }
         } else {
           totalPoints++;
         }
         // tm.display(totalPoints);
         Serial.print("Points: ");
         Serial.println(totalPoints);
+
+        // Reduce the time between tasks only if the time freeze power up is not active
+          if (!timeFreezeActive) {
+            timeBetweenTasks -= 0.1;
+            if (currentTask == 2) {
+              timeBetweenTasks -= 0.1;
+            } else if (currentTask == 3) {
+              timeBetweenTasks += 0.2;
+            }
+          } else if (timeFreezeActive and timeFreezeCounter >= 0) {
+            if (timeFreezeCounter == 0) {
+              timeFreezeActive = false;
+              lcd.clear();
+              lcd.setCursor(0, 0);
+              if (currentTask == 1) {
+                lcd.print("Turn Left!");
+              } else if (currentTask == 2) {
+                lcd.print("Gas It!");
+              } else if (currentTask == 3) {
+                lcd.print("Brake It!");
+              } else if (currentTask == 4) {
+                lcd.print("Shift Up!");
+              } else if (currentTask == 5) {
+                lcd.print("Turn Right!");
+              } else if (currentTask == 6) {
+                lcd.print("Shift Down!");
+              }
+            } else if (timeFreezeCounter > 0) {
+              timeBetweenTasks -= 0.0;
+            }
+          }
+
+          // Randomly generate power-ups
+          applyPowerUp();
+
+        correctCommand = true;
+
+      } else if (!taskCompleted) {
+        // Game ends if the user failed to complete the task on time
+        Serial.println("Game Over! Final Score: " + String(totalPoints));
+        correctCommand = false;
+        startgame = false;
       }
+
+      if (totalPoints >= 99) {
+        Serial.println("Congratulations! You won the game!");
+        startgame = false;
+        totalPoints = 0;
+      }
+
+    previousCommand = currentTask;
   }
-
-  //   // If the user does the command properly, then one points gets added to the total points variable
-  //       // this is the case if the user provides a reponse ONLY to the command given and no other command and the proper command has to be done within the time limit
-  //       // Set correctCommand = true here
-  //       // totalPoints++;
-  //       // Add all sensor checks that is in the other separate files
-  //   // else if the user is unsuccessful in responding to a command either by not responding in time or by providing an incorrect response, then game will end and the user will be notified of their final score 
-  //       // In this case, the user would have the click the start game button in order to play again
-  //       // Make sure to check here that other commands are not done 
-  //       // Set correctCommand = false here
-
-  //   if (taskCompleted) {
-  //         // Points vary depending on powerup active
-  //         if (pointsDoubleActive) {
-  //           totalPoints += 2;
-  //         } else {
-  //           totalPoints ++;
-  //         }
-  //         Serial.print("Points: ");
-  //         Serial.println(totalPoints);
-          
-  //         // Reduce the time between tasks only if the time freeze power up is not active
-  //         if (!timeFreezeActive) {
-  //           timeBetweenTasks -= 0.1;
-  //         }
-
-  //         // Randomly generate power-ups
-  //         applyPowerUp();
-  //     } else {
-  //         // Game ends if the user failed to complete the task on time
-  //         Serial.println("Game Over! Final Score: " + String(totalPoints));
-  //         correctCommand = false;
-  //         startgame = false;
-  //     }
-      
-
-  //   // After each command, the time interval between successive commands becomes smaller with each successful attempt
-  //       // Make sure to lower the time interval here
-  //       // timeBetweenTasks -= 0.1;
-
-
-  //   // There will be a periodic timer implemented here as an interrupt that will provide the user with powerups
-  //       // One of the powerups is to get 5 extra points (totalPoint += 5)
-  //       // Another one of the powerups is to give the double points for 5 seconds (pointsDoubleActive = true)
-  //       // The final powerup is to freeze to time for 5 seconds (timeFreezeActive = true)
-
-
-  //   // If the total points of the user is 99, then the game ends and the user is notified of their score
-  //     if (totalPoints >= 99) {
-  //         Serial.println("Congratulations! You won the game!");
-  //         startgame = false;
-  //         totalPoints = 0;
-  //     }
-  // }
+  
 
   delay(100);  // Delay
 
 }
 
+//*********************************
+//*********** FUNCTIONS ***********
+//*********************************
+
+
 // Function to check if the user performed the correct response
-bool checkUserResponse(int task) {
+int checkUserResponse(int task) {
     switch (task) {
-        case 1: 
-         // Serial.print("Working");
-          // return analogRead(PotentiometerGasPin) == HIGH && analogRead(PotentiometerBrakePin) < 900 && digitalRead(limitSwitchTopPin) == LOW && digitalRead(limitSwitchBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
+        // 1 = Turn Left
+        case 1:
+
+          if (analogRead(PotentiometerGasPin) > 400) {
+            return 1;
+          } else if (analogRead(PotentiometerBrakePin) > 400) {
+            return 1;
+          } else if (digitalRead(limitSwitchTopPin) == LOW) {
+            return 1;
+          } else if (digitalRead(limitSwitchBottomPin) == LOW) {
+            return 1;
+          } else if (currentDir == "Clockwise") {
+            currentDir = "";
+            return 1;
+          } else if (currentDir == "Counterclockwise") {
+            currentDir = "";
+            return 2;
+          }
           
-          Serial.println(analogRead(PotentiometerGasPin));
-          return analogRead(PotentiometerGasPin) > 400 && analogRead(PotentiometerBrakePin) < 400;
-          
-        case 2: 
-         // Serial.print("Working");
-          // return digitalRead(PotentiometerBrakePin) == HIGH && analogRead(PotentiometerGasPin) < 900 && digitalRead(limitSwitchTopPin) == LOW && digitalRead(limitSwitchBottomPin) == LOW && currentDir != 'Clockwise' && currentDir != 'Counterclockwise';
-          Serial.println(analogRead(PotentiometerBrakePin));
-          return analogRead(PotentiometerBrakePin) > 400 && analogRead(PotentiometerGasPin) < 400;
-          
+        // 2 = Gas It
+        case 2:
+
+          if (currentDir == "Counterclockwise") {
+            currentDir = "";
+            return 1;
+          } else if (analogRead(PotentiometerBrakePin) > 400) {
+            return 1;
+          } else if (digitalRead(limitSwitchTopPin) == LOW) {
+            return 1;
+          } else if (digitalRead(limitSwitchBottomPin) == LOW) {
+            return 1;
+          } else if (currentDir == "Clockwise") {
+            currentDir = "";
+            return 1;
+          } else if (analogRead(PotentiometerGasPin) > 400) {
+            return 2;
+          }
+
+        // 3 = Brake It
         case 3: 
-         // Serial.print("Working");
-          return digitalRead(limitSwitchTopPin) == LOW && digitalRead(limitSwitchBottomPin) == HIGH; //&& analogRead(PotentiometerGasPin) < 900 && analogRead(PotentiometerBrakePin) < 900 
+
+          if (currentDir == "Counterclockwise") {
+            currentDir = "";
+            return 1;
+          } else if (analogRead(PotentiometerGasPin) > 400) {
+            return 1;
+          } else if (digitalRead(limitSwitchTopPin) == LOW) {
+            return 1;
+          } else if (digitalRead(limitSwitchBottomPin) == LOW) {
+            return 1;
+          } else if (currentDir == "Clockwise") {
+            currentDir = "";
+            return 1;
+          } else if (analogRead(PotentiometerBrakePin) > 400) {
+            return 2;
+          }
         
+        // 4 = Shift Up
         case 4:
-          //Serial.print("Working");
-          return digitalRead(limitSwitchBottomPin) == LOW && digitalRead(limitSwitchTopPin) == HIGH; //analogRead(PotentiometerGasPin) < 900 && analogRead(PotentiometerBrakePin) < 900 
+
+          if (currentDir == "Counterclockwise") {
+            currentDir = "";
+            return 1;
+          } else if (analogRead(PotentiometerGasPin) > 400) {
+            return 1;
+          } else if (analogRead(PotentiometerBrakePin) > 400) {
+            return 1;
+          } else if (digitalRead(limitSwitchBottomPin) == LOW) {
+            return 1;
+          } else if (currentDir == "Clockwise") {
+            currentDir = "";
+            return 1;
+          } else if (digitalRead(limitSwitchTopPin) == LOW) {
+            return 2;
+          }
+          
+        // 5 = Turn Right
         case 5:
-          //Serial.print("Working");
-          // digitalWrite(4, HIGH);
-          // return true;
-          //Serial.println(currentDir);
-          return currentDir == "Counterclockwise";
-          currentDir = "";
+
+          if (analogRead(PotentiometerGasPin) > 400) {
+            return 1;
+          } else if (analogRead(PotentiometerBrakePin) > 400) {
+            return 1;
+          } else if (digitalRead(limitSwitchTopPin) == LOW) {
+            return 1;
+          } else if (digitalRead(limitSwitchBottomPin) == LOW) {
+            return 1;
+          } else if (currentDir == "Counterclockwise") {
+            currentDir = "";
+            return 1;
+          } else if (currentDir == "Clockwise") {
+            currentDir = "";
+            return 2;
+          }
+
+        // 6 = Shift Down
         case 6:
-          // Serial.print("Working");
-          // digitalWrite(4, HIGH);
-          // return true;
-          //Serial.println(currentDir);
-          return currentDir == "Clockwise";
-          currentDir = "";
+
+          if (currentDir == "Counterclockwise") {
+            currentDir = "";
+            return 1;
+          } else if (analogRead(PotentiometerGasPin) > 400) {
+            return 1;
+          } else if (analogRead(PotentiometerBrakePin) > 400) {
+            return 1;
+          } else if (digitalRead(limitSwitchTopPin) == LOW) {
+            return 1;
+          } else if (currentDir == "Clockwise") {
+            currentDir = "";
+            return 1;
+          } else if (digitalRead(limitSwitchBottomPin) == LOW) {
+            return 2;
+          }
+
         default: 
-          return false;
+          return 3;
     }
 }
 
 // Function to randomly generate power-ups
-// void applyPowerUp() {
-//     int powerUpChance = random(1, 11);
+void applyPowerUp() {
+    int powerUpChance = random(1, 11);
 
-//     switch (powerUpChance) {
-//         case 1:
-//             Serial.println("Power-Up: 5 Bonus Points!");
-//             totalPoints += 5;
-//             break;
-//         case 2:
-//             Serial.println("Power-Up: Double Points for 5 Seconds!");
-//             pointsDoubleActive = true;
-//             delay(pointsDoubleDuration * 1000);
-//             pointsDoubleActive = false;
-//             break;
-//         case 3:
-//             Serial.println("Power-Up: Time Freeze for 5 Seconds!");
-//             timeFreezeActive = true;
-//             delay(timeFreezeDuration * 1000);
-//             timeFreezeActive = false;
-//             break;
-//         default:
-//           break;
-//     }
-// }
+    switch (powerUpChance) {
+        // Bonus five points for one time
+        case 1:
+            Serial.println("Power-Up: 5 Bonus Points!");
+            totalPoints += 5;
+            // tm.display(totalPoints);
+            Serial.print("Points: ");
+            Serial.println(totalPoints);
+            lcd.setCursor(1, 0);  // Set cursor to first row, first column
+            lcd.print("Bonus Five Points!");
+            break;
+        // Points Double for five commands
+        case 2:
+            if (!pointsDoubleActive) {
+              Serial.println("Power-Up: Double Points for 5 Seconds!");
+              pointsDoubleCounter = 5;
+              pointsDoubleActive = true;
+              lcd.setCursor(1, 0);  // Set cursor to first row, first column
+              lcd.print("x2 Points for Five Commands!");
+              break;
+            }
+        // Time freeze for five commands
+        case 3:
+          if (!timeFreezeActive) {
+            Serial.println("Power-Up: Time Freeze for 5 Seconds!");
+            timeFreezeCounter = 5;
+            timeFreezeActive = true;
+            lcd.setCursor(1, 0);  // Set cursor to first row, first column
+            lcd.print("Time Freeze for Five Commands!");
+            break;
+          }
+        default:
+          break;
+    }
+}
 
 void handle_A() {
   int currentA = digitalRead(ASignal);
@@ -332,9 +463,9 @@ void handle_A() {
 
       // Positive Counter -> Clockwise
       if (counter > 100) {
-        currentDir = "Counterclockwise";
-      } else if (counter < -100) {
         currentDir = "Clockwise";
+      } else if (counter < -100) {
+        currentDir = "Counterclockwise";
       } else {
         currentDir = "";
       }
