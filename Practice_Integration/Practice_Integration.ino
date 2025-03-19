@@ -18,17 +18,17 @@ const int ConfirmButton = 4;           // Button for Confirming User Input
 const int startGameButton = 5;          // System Requirements
 const int limitSwitchTopPin = 6;     // Hall Effect Sensor
 const int limitSwitchBottomPin = 7;  // Hall Effect Sensor
-const int LeftButton = 8;              // Button for Left Arrow to Select Track
-const int RightButton = 9;             // Button for Right Arrow to Select Track
-const int TMLCLK = 10;                  // Seven Segment Display Clock
-const int TMDATA = 11;                  // Seven Segment Display Data
-const int RXPin = 12;
-const int TXPin = 13;
+const int JoystickButtonPin = 8;      // Joystick Button
+const int TMLCLK = 9;                  // Seven Segment Display Clock
+const int TMDATA = 10;                  // Seven Segment Display Data
+const int RXPin = 11;
+const int TXPin = 12;
 const int PotentiometerGasPin = A0;        // Limit Switch
 const int PotentiometerBrakePin = A1;      // Limit Switch
+const int JoystickXPin = A2;               // Joystick X-Axis
 
 
-// A2, A3, A4, A5
+// 13, A3, A4, A5
 
 
 
