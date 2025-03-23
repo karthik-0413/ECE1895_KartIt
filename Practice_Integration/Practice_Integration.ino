@@ -75,7 +75,7 @@ int arrowCounter = 0;               // Keep track of relative arrow presses for 
 float timeBetweenTasks = 12.0;       // Time interval between commands becomes smaller with each successful attempt (seconds)
 
 String currentDir = "";             // Variable for direction of steering wheel
-String gameTracks[6] = {"Freestyle", "Rainbow Road", "Moo Moo Meadows", "Bowser's Castle", "Baby Park", "Coconut Mall"};
+String gameTracks[6] = {"Freestyle", "Rainbow Road", "Moo Moo Meadows", "Bowser's Castle", "Baby Park"};
 
 // Hard coded tracks for Mariokart
 const int RainbowRoad[82] = {
@@ -194,7 +194,7 @@ void loop() {
           bool leftPressed = digitalRead(LeftArrowSelect) == HIGH;
 
           // Right arrow logic (increment only if not at last track)
-          if (rightPressed && !previousRightState && arrowCounter < 5) {
+          if (rightPressed && !previousRightState && arrowCounter < 4) {
               arrowCounter++;
           }
 
@@ -398,10 +398,6 @@ void loop() {
           startgame = false;
           totalPoints = 0;
         } else if (totalPoints == 26 && currentTrack == 4) {
-          Serial.println("Congratulations! You won the game!");
-          startgame = false;
-          totalPoints = 0;
-        } else if (totalPoints == 44 && currentTrack == 5) {
           Serial.println("Congratulations! You won the game!");
           startgame = false;
           totalPoints = 0;
