@@ -12,6 +12,7 @@ private:
     void waitPlayIsTerminated(void);
     int p_RX;
     int p_TX;
+    
 
 public:
     DFRobotDFPlayerMini player;
@@ -21,6 +22,8 @@ public:
     boolean playCompleted(void);
     void initialize(void);
     int serialPrintStatus(int errorOnly);
+    void checkPlayCompletion();
+    boolean playInProgress;
 };
 
 MP3Player::MP3Player(int RX, int TX)
@@ -58,7 +61,8 @@ void MP3Player::playTrackNumber(int trackNumber, int volume, boolean waitPlayTer
     player.play(trackNumber);
     if (waitPlayTerminated)
     {
-        waitPlayIsTerminated();
+        // Do not block, just set a flag
+        playInProgress = true;
     }
 }
 
@@ -66,6 +70,15 @@ void MP3Player::waitPlayIsTerminated(void)
 {
     while (!playCompleted())
     {
+    }
+}
+
+void MP3Player::checkPlayCompletion(void)
+{
+    if (playInProgress && playCompleted())
+    {
+        playInProgress = false; // Track is finished
+        Serial.println("Track finished!");
     }
 }
 
