@@ -84,12 +84,6 @@ const int RainbowRoad[82] = {
     4, 2
 };
 
-const int MooMooMeadows[57] = {
-    4, 2, 4, 2, 6, 3, 1, 1, 6, 3, 1, 2, 6, 3, 5, 2, 1, 4, 2, 1,
-    3, 5, 6, 3, 1, 4, 2, 4, 2, 6, 3, 1, 4, 2, 4, 2, 4, 2, 6, 3,
-    1, 4, 2, 4, 2, 6, 3, 5, 3, 1, 3, 5, 1, 4, 2, 4, 2
-};
-
 const int BowserCastle[77] = {
     4, 2, 4, 2, 6, 3, 5, 4, 2, 4, 2, 6, 3, 1, 4, 2, 6, 3, 5, 4,
     2, 6, 3, 5, 4, 2, 6, 3, 1, 4, 2, 6, 3, 1, 4, 2, 6, 3, 5, 4,
@@ -248,14 +242,10 @@ void loop() {
             Serial.print("Perform Task: ");
             Serial.println(currentTask);
           } else if (currentTrack == 2) {
-            currentTask = MooMooMeadows[commandCounter];
-            Serial.print("Perform Task: ");
-            Serial.println(currentTask);
-          } else if (currentTrack == 3) {
             currentTask = BowserCastle[commandCounter];
             Serial.print("Perform Task: ");
             Serial.println(currentTask);
-          } else if (currentTrack == 4) {
+          } else if (currentTrack == 3) {
             currentTask = BabyPark[commandCounter];
             Serial.print("Perform Task: ");
             Serial.println(currentTask);
@@ -388,21 +378,14 @@ void loop() {
             lcd.print("You won the game!");
             startgame = false;
             totalPoints = 0;
-          } else if (totalPoints >= 57 && currentTrack == 2) {
+          } else if (totalPoints >= 77 && currentTrack == 2) {
             Serial.println("Congratulations! You won the game!");
             lcd.clear();
             lcd.setCursor(0, 0);
             lcd.print("You won the game!");
             startgame = false;
             totalPoints = 0;
-          } else if (totalPoints >= 77 && currentTrack == 3) {
-            Serial.println("Congratulations! You won the game!");
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("You won the game!");
-            startgame = false;
-            totalPoints = 0;
-          } else if (totalPoints >= 26 && currentTrack == 4) {
+          } else if (totalPoints >= 26 && currentTrack == 3) {
             Serial.println("Congratulations! You won the game!");
             lcd.clear();
             lcd.setCursor(0, 0);
