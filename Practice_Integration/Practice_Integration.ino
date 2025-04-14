@@ -1,10 +1,12 @@
 // <#include <SoftwareSerial.h>
 // Include the library
 #include <TM1637Display.h>
-#include "mp3tf16p.h"
+// #include "mp3tf16p.h"
+#include <NeoSWSerial.h>
 #include <avr/interrupt.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+
 
 // Display:
 // Seven Segment -> Score
@@ -18,7 +20,7 @@ const int BSignal = 3;                    // Rotary Encoder for Steering
 const int RightArrowSelect = 4;          // System Requirements
 const int LeftArrowSelect = 5;      // Joystick Button
 const int limitSwitchTopPin = 6;     // Hall Effect Sensor
-const int limitSwitchBottomPin = 7;  // Hall Effect Sensor
+const int limitSwitchBottomPin = 7;  // Hall Effect Sensor6
 const int TMLCLK = 8;                  // Seven Segment Display Clock
 const int TMDATA = 9;                  // Seven Segment Display Data
 const int RXPin = 10;
@@ -35,13 +37,15 @@ const int startGameButton = A2;               // Joystick X-Axis
 
 // Setting up DFPlayer Mini
 // SoftwareSerial softwareSerial(RXPin, TXPin);  // Setting up DFPlayer Mini
-MP3Player mp3(RXPin, TXPin);
+// MP3Player mp3(RXPin, TXPin);
 
 // Define the LCD address (default is 0x27 or 0x3F, depending on your module)
 LiquidCrystal_I2C lcd(0x27, 16, 2); // 16x2 LCD
 
 // Seven Segment Display
 TM1637Display display = TM1637Display(TMLCLK, TMDATA);
+
+NeoSWSerial mySerial(RXPin, TXPin); // RX = 6, TX = 7
 
 
 // Variables for Logic
@@ -73,7 +77,7 @@ int volume = 7;
 float timeBetweenTasks = 12.0;       // Time interval between commands becomes smaller with each successful attempt (seconds)
 
 String currentDir = "";             // Variable for direction of steering wheel
-String gameTracks[5] = {"Freestyle", "Rainbow Road", "Bowser's Castle", "Baby Park"};
+String gameTracks[4] = {"Freestyle", "Rainbow Road", "Bowser's Castle", "Baby Park"};
 
 // Hard coded tracks for Mariokart
 const int RainbowRoad[82] = {
@@ -102,6 +106,14 @@ void setup() {
 
   // Debugging
   Serial.begin(9600);
+  mySerial.begin(9600);     // Communication with DFPlayer Mini
+  
+  Serial.println("Initializing DFPlayer Mini...");
+  delay(1000);
+
+  // Play MP3 file
+  Serial.println("Sending play command...");
+  playTrack(11); // Replace '1' with the desired track number
 
   // Define Pin Modes of All Sensors
   pinMode(PotentiometerGasPin, INPUT);
@@ -118,7 +130,7 @@ void setup() {
   // Define Pin Modes for Other Buttons
   pinMode(startGameButton, INPUT);
   
-  mp3.initialize();
+  // mp3.initialize();
 
   lcd.init();       // Initialize the LCD
   lcd.backlight();  // Turn on the backlight
@@ -140,17 +152,18 @@ void setup() {
 
   randomSeed(analogRead(A5));
 
-  mp3.playTrackNumber(11, volume);
-  delay(7000);
+  // mp3.playTrackNumber(11, volume);
+  // delay(7000);
 
   
 }
 
 void loop() {
 
-   mp3.checkPlayCompletion();
+  //  mp3.checkPlayCompletion();
 
-  if (!mp3.playInProgress)
+  // if (!mp3.playInProgress)
+  if (true)
   {
     // previousStartButtonStatus = true -> means that the button is in track select mode
     // previousStartButtonStatus = false -> means that the button is in start game mode
@@ -296,7 +309,8 @@ void loop() {
 
           // Serial.println("Playing Music Now");
 
-          mp3.playTrackNumber(currentTask, volume);  // Play the track
+          // mp3.playTrackNumber(currentTask, volume);  // Play the track
+          playTrack(currentTask); // Replace '1' with the desired track number
 
           // Start a timer for user response
           long startTime = millis();
@@ -312,7 +326,10 @@ void loop() {
                   Serial.println("User Passed Current Command!");
                   goodResponse = 0;
                   commandCounter++;
-                  mp3.playTrackNumber(7, volume);  // Play the track
+                  lcd.clear();
+                  lcd.print("Correct Response");
+                  delay(500);
+                  playTrack(7); // Replace '1' with the desired track number
                   delay(2000);
                   break;
               } else if (goodResponse == 1) {
@@ -320,7 +337,12 @@ void loop() {
                 Serial.println("Incorrect Command Done by User!");
                 lcd.clear();
                 lcd.print("Game Over!");
-                mp3.playTrackNumber(8, volume);  // Play the track
+                // lcd.setCursor(0, 1);
+                // lcd.print("                "); // Clear previous track
+                // lcd.setCursor(0, 1);  // Set cursor to first row, first column
+                // lcd.print("Wrong Response");
+                // delay(2000);
+                playTrack(8); // Replace '1' with the desired track number
                 delay(2000);
                 goodResponse = 0;
                 break;
@@ -351,7 +373,7 @@ void loop() {
               }
 
               // Randomly generate power-ups
-              applyPowerUp();
+              // applyPowerUp();
 
             correctCommand = true;
 
@@ -360,6 +382,8 @@ void loop() {
             Serial.println("Game Over! Final Score: " + String(totalPoints));
             lcd.clear();
             lcd.print("Game Over!");
+            playTrack(8); // Replace '1' with the desired track number
+            delay(2000);
             correctCommand = false;
             startgame = false;
           }
@@ -414,10 +438,10 @@ int checkUserResponse(int task) {
       case 1:
         // Serial.println("In 1");
 
-        if (analogRead(PotentiometerGasPin) > 400) {
+        if (analogRead(PotentiometerGasPin) < 400) {
           Serial.println("Gas Instead");
           return 1;
-        } else if (analogRead(PotentiometerBrakePin) > 400) {
+        } else if (analogRead(PotentiometerBrakePin) < 400) {
           Serial.println("Brake Instead");
           return 1;
         } else if (digitalRead(limitSwitchTopPin) == LOW) {
@@ -444,7 +468,7 @@ int checkUserResponse(int task) {
         if (currentDir != "") {
           Serial.println("Turn Instead");
           return 1;
-        } else if (analogRead(PotentiometerBrakePin) > 400) {
+        } else if (analogRead(PotentiometerBrakePin) < 400) {
           Serial.println("Brake Instead");
           return 1;
         } else if (digitalRead(limitSwitchTopPin) == LOW) {
@@ -456,7 +480,7 @@ int checkUserResponse(int task) {
         } else if (currentDir != "") {
           Serial.println("Turn Instead");
           return 1;
-        } else if (analogRead(PotentiometerGasPin) > 400) {
+        } else if (analogRead(PotentiometerGasPin) < 400) {
           return 2;
         } else {
           return 3;
@@ -470,7 +494,7 @@ int checkUserResponse(int task) {
         if (currentDir == "Counterclockwise") {
           Serial.println("Turn Left Instead");
           return 1;
-        } else if (analogRead(PotentiometerGasPin) > 400) {
+        } else if (analogRead(PotentiometerGasPin) < 400) {
           Serial.println("Gas Instead");
           return 1;
         } else if (digitalRead(limitSwitchTopPin) == LOW) {
@@ -482,7 +506,7 @@ int checkUserResponse(int task) {
         } else if (currentDir == "Clockwise") {
           Serial.println("Turn Right Instead");
           return 1;
-        } else if (analogRead(PotentiometerBrakePin) > 400) {
+        } else if (analogRead(PotentiometerBrakePin) < 400) {
           return 2;
         } else {
           return 3;
@@ -497,10 +521,10 @@ int checkUserResponse(int task) {
         if (currentDir == "Counterclockwise") {
           Serial.println("Turn Left Instead");
           return 1;
-        } else if (analogRead(PotentiometerGasPin) > 400) {
+        } else if (analogRead(PotentiometerGasPin) < 400) {
           Serial.println("Gas Instead");
           return 1;
-        } else if (analogRead(PotentiometerBrakePin) > 400) {
+        } else if (analogRead(PotentiometerBrakePin) < 400) {
           Serial.println("Brake Instead");
           return 1;
         } else if (digitalRead(limitSwitchBottomPin) == LOW) {
@@ -521,10 +545,10 @@ int checkUserResponse(int task) {
 
         // Serial.println("In 5");
 
-        if (analogRead(PotentiometerGasPin) > 400) {
+        if (analogRead(PotentiometerGasPin) < 400) {
           Serial.println("Gas Instead");
           return 1;
-        } else if (analogRead(PotentiometerBrakePin) > 400) {
+        } else if (analogRead(PotentiometerBrakePin) < 400) {
           Serial.println("Brake Instead");
           return 1;
         } else if (digitalRead(limitSwitchTopPin) == LOW) {
@@ -550,10 +574,10 @@ int checkUserResponse(int task) {
 
         if (currentDir == "Counterclockwise") {
           return 1;
-        } else if (analogRead(PotentiometerGasPin) > 400) {
+        } else if (analogRead(PotentiometerGasPin) < 400) {
           Serial.println("Gas Instead");
           return 1;
-        } else if (analogRead(PotentiometerBrakePin) > 400) {
+        } else if (analogRead(PotentiometerBrakePin) < 400) {
           Serial.println("Brake Instead");
           return 1;
         } else if (digitalRead(limitSwitchTopPin) == LOW) {
@@ -647,13 +671,36 @@ void handle_A() {
     }
 
 
-    // Positive Counter -> Clockwise
+    // Positive Counter -> Clockwise = FLIPPED IN ORDER TO WORK ON PHYSICAL DESIGN
     if (counter > 300) {
-      currentDir = "Clockwise";
-    } else if (counter < -300) {
       currentDir = "Counterclockwise";
+    } else if (counter < -300) {
+      currentDir = "Clockwise";
     } else {
       currentDir = "";
     }
   }
 }
+
+void playTrack(int trackNumber) {
+  byte command[] = {0x7E, 0xFF, 0x06, 0x03, 0x00, (byte)(trackNumber >> 8), (byte)(trackNumber), 0xEF};
+  mySerial.write(command, sizeof(command));
+  Serial.print("Playing track ");
+  Serial.println(trackNumber);
+}
+
+
+bool isPlaying() {
+  byte command[] = {0x7E, 0xFF, 0x06, 0x42, 0x00, 0x00, 0x00, 0xEF}; // Query playback status command
+  mySerial.write(command, sizeof(command));
+
+  delay(100); // Wait for response
+
+  if (mySerial.available()) {
+    byte response = mySerial.read();
+    return response == 0x01; // If response byte indicates playback is active
+  }
+  return false; // Default to "not playing" if no response
+}
+
+
