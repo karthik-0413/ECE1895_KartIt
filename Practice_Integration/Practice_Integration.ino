@@ -9,7 +9,7 @@
 
 
 // Display:
-// Seven Segment -> Score
+// Seven Segment -> Score 
 // LCD -> Commands
 
 // Initialize Sensor Pins Here
@@ -691,16 +691,14 @@ void playTrack(int trackNumber) {
 
 
 bool isPlaying() {
-  byte command[] = {0x7E, 0xFF, 0x06, 0x42, 0x00, 0x00, 0x00, 0xEF}; // Query playback status command
+  byte command[] = {0x7E, 0xFF, 0x06, 0x42, 0x00, 0x00, 0x00, 0xEF};
   mySerial.write(command, sizeof(command));
 
   delay(100); // Wait for response
 
   if (mySerial.available()) {
     byte response = mySerial.read();
-    return response == 0x01; // If response byte indicates playback is active
+    return response == 0x01;
   }
-  return false; // Default to "not playing" if no response
+  return false;
 }
-
-
